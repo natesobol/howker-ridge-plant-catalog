@@ -415,7 +415,6 @@ header p{
   const themeToggle = document.getElementById('theme-toggle');
   const rotateToggle = document.getElementById('rotate-toggle');
   const stickyToggle = document.getElementById('sticky-toggle');
-  document.getElementById("year")?.textContent = new Date().getFullYear();
 
   // Placeholders for images
   const LQ_PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(
@@ -425,31 +424,17 @@ header p{
     `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800"><rect width="100%" height="100%" fill="#0f1320"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#a5b4c3" font-family="system-ui" font-size="22">image unavailable</text></svg>`
   );
 
-  /* ---------- Editor/Preview safe site-origin resolution ---------- */
-  const SITE_ORIGIN = (() => {
-    const attr = document.getElementById('plant-detail')?.dataset?.siteOrigin;
-    if (attr) return attr;
-    const canon = document.querySelector('link[rel="canonical"]')?.href;
-    if (canon) { try { return new URL(canon).origin; } catch(e){} }
-    if (document.referrer) {
-      try {
-        const o = new URL(document.referrer).origin;
-        if (/nh48pics\.com$/i.test(new URL(o).hostname)) return o;
-      } catch(e){}
+  /* ---------- Data source: static JSON from GitHub Pages ---------- */
+  async function fetchPlants() {
+    const res = await fetch(
+      'https://natesobol.github.io/howker-ridge-plant-catalog/plants.json',
+      { mode: 'cors' }
+    );
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
     }
-    return 'https://www.nh48pics.com';
-  })();
-
-  async function fetchJSON(url){
-    const res = await fetch(url, { mode:'cors', credentials:'omit', headers:{ 'Accept':'application/json' } });
-    if(!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   }
-async function fetchPlants() {
-  const url = 'https://natesobol.github.io/howker-ridge-plant-catalog/plants.json';
-  const res = await fetch(url, { mode: 'cors' });
-  return res.json();
-}
 
 
   /* ---------- Carousel and Details Rendering ---------- */
