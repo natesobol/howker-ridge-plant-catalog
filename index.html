@@ -722,15 +722,12 @@ body.details-open .drawer.open {
     return res.json();
   }
 
-  async function fetchPlants(params = {}){
-    const prod = new URL('/_functions/plants', SITE_ORIGIN);
-    const dev  = new URL('/_functions-dev/plants', SITE_ORIGIN);
-    for (const [k,v] of Object.entries(params)) if (v) { prod.searchParams.set(k,v); dev.searchParams.set(k,v); }
-    const now = Date.now().toString(); prod.searchParams.set('_', now); dev.searchParams.set('_', now);
-    try { return normalize(await fetchJSON(prod)); }
-    catch { return normalize(await fetchJSON(dev)); }
-    function normalize(data){ return Array.isArray(data) ? data : (data.items || []); }
-  }
+  async function fetchPlants() {
+  const url = 'https://natesobol.github.io/howker-ridge-plant-catalog/plants.json';
+  const res = await fetch(url, { mode: 'cors' });
+  return res.json();
+}
+
 
   /* ---------- Step #5: Safer auto-resize for Wix iframe ---------- */
   (function(){
@@ -840,11 +837,16 @@ body.details-open .drawer.open {
         img.addEventListener('load', schedule, {once:true});
       }
       // Instead of opening a drawer, redirect to details page
-      el.addEventListener("click", ()=>{
-        const id = p.id;
-        // encode id for URL and navigate to plant.html
-        window.location.href = `plant.html?id=${encodeURIComponent(id)}`;
-      });
+     el.addEventListener("click", () => {
+  const id = p.id;
+  // Force navigation in the top frame rather than staying in the Wix embed
+  window.open(
+    `https://natesobol.github.io/howker-ridge-plant-catalog/plant.html?id=${encodeURIComponent(id)}`,
+    "_top"
+  );
+});
+
+
       grid.appendChild(el);
     });
 
