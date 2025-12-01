@@ -62,14 +62,14 @@ body{
  ****************************/
 .wrap{
   max-width:1100px;
-  margin:0 auto;
-  padding:12px;
+  margin:24px auto;
+  padding:16px;
 }
 .panel{
   background:var(--panel);
-  border:2px solid #ffffff;
-  border-radius:10px;
-  padding:16px;
+  border:2px solid var(--stroke);
+  border-radius:14px;
+  padding:20px 20px 24px;
   box-shadow:0 10px 30px #0004;
   overflow:hidden;
 }
@@ -153,14 +153,19 @@ header p{
   position:relative;
   height:auto;
   aspect-ratio:5/3;
-  overflow:hidden;
+  margin:16px 8px 20px;      /* side padding for image block */
+  padding:8px;               /* inner padding around image */
+  background:var(--card);
+  border-radius:12px;
   border-bottom:1px dashed var(--stroke);
-  margin-bottom:16px;
+  overflow:hidden;
 }
 .carousel{
   position:relative;
   width:100%;
   height:100%;
+  border-radius:10px;
+  overflow:hidden;
 }
 .slide{
   position:absolute;
@@ -254,6 +259,24 @@ header p{
 .section[hidden]{
   display:none;
 }
+
+/* Chips / tag row under the title */
+.chiprow{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin:8px 0 4px;
+}
+.chip{
+  display:inline-block;
+  border:1px solid var(--stroke);
+  border-radius:9999px;
+  padding:4px 10px;
+  font-size:11px;
+  color:var(--muted);
+  white-space:nowrap;
+}
+
 /* Back link styling */
 .back-link{
   display:inline-block;
@@ -281,16 +304,26 @@ header p{
   }
   .wrap{
     padding:0;
+    margin:16px auto;
   }
   .panel{
     width:calc(100% - (2 * var(--edge)));
     margin-inline:var(--edge);
     max-width:none;
     border-width:2px;
-    border-radius:10px;
+    border-radius:12px;
+    padding:16px 12px 20px;
   }
   header h1{
     font-size:20px;
+  }
+  /* Hide Settings panel on mobile */
+  .settings{
+    display:none;
+  }
+  .media{
+    margin:12px 0 16px;
+    padding:6px;
   }
 }
 @media (max-width:320px){
@@ -312,7 +345,7 @@ header p{
 </head>
 <body>
 
-<div class="wrap panel" id="plant-detail" data-site-origin="https://www.nh48pics.com">
+<div class="wrap panel" id="plant-detail">
   <header>
     <blockquote>
       <h1>Howker Ridge • Plant Details</h1>
@@ -321,7 +354,7 @@ header p{
       <p>Detailed information for an alpine or subalpine species recorded along Howker Ridge Trail. Use the back link to return to the catalog.</p>
     </blockquote>
   </header>
-  <!-- Settings panel (retained for theme toggle) -->
+  <!-- Settings panel (retained for theme toggle on desktop) -->
   <aside class="settings" id="settings-panel">
     <div class="settings-logo">
       <span class="settings-icon">⚙️</span>
@@ -388,16 +421,11 @@ header p{
 <script>
   /* =============================================================
      HOWKER RIDGE — PLANT DETAILS (standalone page)
-     This script replicates many of the catalog functions to maintain consistency and length,
-     but is focused on rendering a single plant identified by the "id" query parameter.
+     Focused on rendering a single plant identified by the "id" query parameter.
   ============================================================= */
 
   /* ---------- Data & State ---------- */
   let PLANTS = [];
-  let PAGE = 1;               // unused but retained
-  const DEFAULT_PAGE_SIZE = 20;
-  let PAGE_SIZE = DEFAULT_PAGE_SIZE;
-  let TOTAL_PAGES = 1;
   // Carousel state
   let carouselTimer = null;
   let carouselIdx = 0;
@@ -410,7 +438,6 @@ header p{
   const dotsEl = $("#dots");
   const prevBtn = document.getElementById('prevBtn');
   const nextBtn = document.getElementById('nextBtn');
-  const drawerContent = document.getElementById('drawerContent');
   // Settings toggles
   const themeToggle = document.getElementById('theme-toggle');
   const rotateToggle = document.getElementById('rotate-toggle');
@@ -436,7 +463,6 @@ header p{
     return res.json();
   }
 
-
   /* ---------- Carousel and Details Rendering ---------- */
   function buildCarousel(images, altBase){
     carouselEl.innerHTML = '';
@@ -445,19 +471,34 @@ header p{
     carouselIdx = 0;
     if (!images || !images.length){ images = [PLACEHOLDER]; }
     images.forEach((src, i)=>{
-      const slide = document.createElement('div'); slide.className = 'slide' + (i===0 ? ' active' : '');
-      const img = document.createElement('img'); img.alt = `${altBase} image ${i+1} of ${images.length}`;
-      if (i===0){ img.src = src; }
-      else { img.loading='lazy'; img.decoding='async'; img.setAttribute('data-src', src); img.src = LQ_PLACEHOLDER; }
+      const slide = document.createElement('div');
+      slide.className = 'slide' + (i===0 ? ' active' : '');
+      const img = document.createElement('img');
+      img.alt = `${altBase} image ${i+1} of ${images.length}`;
+      if (i===0){
+        img.src = src;
+      } else {
+        img.loading='lazy';
+        img.decoding='async';
+        img.setAttribute('data-src', src);
+        img.src = LQ_PLACEHOLDER;
+      }
       img.onerror = ()=>{ img.onerror=null; img.src=PLACEHOLDER; };
-      slide.appendChild(img); carouselEl.appendChild(slide);
+      slide.appendChild(img);
+      carouselEl.appendChild(slide);
       carouselImgs.push(img);
-      const dot=document.createElement('div'); dot.className='dot'+(i===0?' active':''); dot.addEventListener('click', ()=>goTo(i)); dotsEl.appendChild(dot);
+      const dot=document.createElement('div');
+      dot.className='dot'+(i===0?' active':'');
+      dot.addEventListener('click', ()=>goTo(i));
+      dotsEl.appendChild(dot);
     });
+    const media = document.querySelector('.media');
     prevBtn.onclick = prev;
     nextBtn.onclick = next;
-    const media = document.querySelector('.media');
-    media.onmouseenter = stopCarousel; media.onmouseleave = startCarousel; media.onfocusin = stopCarousel; media.onfocusout = startCarousel;
+    media.onmouseenter = stopCarousel;
+    media.onmouseleave = startCarousel;
+    media.onfocusin = stopCarousel;
+    media.onfocusout = startCarousel;
     startCarousel();
   }
   function updateSlides(){
@@ -468,22 +509,47 @@ header p{
   }
   function ensureImgLoaded(i){
     const img = carouselImgs[i]; if (!img) return;
-    const real = img.getAttribute('data-src'); if (real){ img.src = real; img.removeAttribute('data-src'); }
+    const real = img.getAttribute('data-src');
+    if (real){
+      img.src = real;
+      img.removeAttribute('data-src');
+    }
   }
-  function next(){ carouselIdx = (carouselIdx + 1) % carouselImgs.length; ensureImgLoaded(carouselIdx); updateSlides(); }
-  function prev(){ carouselIdx = (carouselIdx - 1 + carouselImgs.length) % carouselImgs.length; ensureImgLoaded(carouselIdx); updateSlides(); }
-  function goTo(i){ carouselIdx = i % carouselImgs.length; ensureImgLoaded(carouselIdx); updateSlides(); }
-  function startCarousel(){ stopCarousel(); carouselDelay = 3000 + Math.floor(Math.random()*2000); carouselTimer = setInterval(next, carouselDelay); }
-  function stopCarousel(){ if (carouselTimer){ clearInterval(carouselTimer); carouselTimer=null; } }
+  function next(){
+    carouselIdx = (carouselIdx + 1) % carouselImgs.length;
+    ensureImgLoaded(carouselIdx);
+    updateSlides();
+  }
+  function prev(){
+    carouselIdx = (carouselIdx - 1 + carouselImgs.length) % carouselImgs.length;
+    ensureImgLoaded(carouselIdx);
+    updateSlides();
+  }
+  function goTo(i){
+    carouselIdx = i % carouselImgs.length;
+    ensureImgLoaded(carouselIdx);
+    updateSlides();
+  }
+  function startCarousel(){
+    stopCarousel();
+    carouselDelay = 3000 + Math.floor(Math.random()*2000);
+    carouselTimer = setInterval(next, carouselDelay);
+  }
+  function stopCarousel(){
+    if (carouselTimer){
+      clearInterval(carouselTimer);
+      carouselTimer=null;
+    }
+  }
 
   /* ---------- Populate details ---------- */
   function populatePlant(p){
     document.getElementById('d-title').textContent = p.common || '';
     document.getElementById('d-latin').textContent = p.latin || '';
     document.getElementById('d-tags').innerHTML = `
-      ${p.type ? `<span class=\"chip\">${p.type}</span>` : ''}
-      ${p.habitat ? `<span class=\"chip\">${p.habitat}</span>` : ''}
-      ${(p.tags||[]).map(t=>`<span class=\"chip\">#${t}</span>`).join("")}
+      ${p.type ? `<span class="chip">${p.type}</span>` : ''}
+      ${p.habitat ? `<span class="chip">${p.habitat}</span>` : ''}
+      ${(p.tags||[]).map(t=>`<span class="chip">#${t}</span>`).join("")}
     `;
     document.getElementById('f-type').textContent    = p.type      || "—";
     document.getElementById('f-elev').textContent    = p.elevation || "—";
@@ -493,15 +559,19 @@ header p{
     document.getElementById('f-similar').textContent = p.similar   || "—";
     document.getElementById('f-ecology').textContent = p.ecology   || "—";
     document.getElementById('f-status').textContent  = p.status    || "—";
+
     const desc = (p.desc || p.teaser || "").trim();
     document.getElementById('d-desc').textContent = desc;
     if (desc) document.getElementById('sec-desc').removeAttribute('hidden');
+
     const notes = [p.fieldNotes1, p.fieldNotes2, p.fieldNotes3, p.fieldNotes4].filter(Boolean);
     document.getElementById('d-notes').innerHTML = notes.map(n=>`<li>${n}</li>`).join("");
     if (notes.length > 0) document.getElementById('sec-notes').removeAttribute('hidden');
+
     const credits = (p.credits || "").trim();
     document.getElementById('d-credits').textContent = credits;
     if (credits) document.getElementById('sec-credits').removeAttribute('hidden');
+
     const imgs = Array.isArray(p.imgs) && p.imgs.length ? p.imgs : (p.img ? [p.img] : []);
     buildCarousel(imgs, p.common || 'Selected');
   }
@@ -531,29 +601,37 @@ header p{
     }
 
     // Settings handlers (simplified)
-    themeToggle.addEventListener('change', () => {
-      if (themeToggle.checked) { document.body.classList.remove('light'); }
-      else { document.body.classList.add('light'); }
-    });
-    rotateToggle.addEventListener('change', () => {
-      if (rotateToggle.checked) {
-        if (!carouselTimer) startCarousel();
-      } else {
-        stopCarousel();
-      }
-    });
-    stickyToggle.addEventListener('change', () => {
-      const headerEl = document.querySelector('header');
-      headerEl.classList.toggle('sticky', stickyToggle.checked);
-    });
+    if (themeToggle){
+      themeToggle.addEventListener('change', () => {
+        if (themeToggle.checked) { document.body.classList.remove('light'); }
+        else { document.body.classList.add('light'); }
+      });
+    }
+    if (rotateToggle){
+      rotateToggle.addEventListener('change', () => {
+        if (rotateToggle.checked) {
+          if (!carouselTimer) startCarousel();
+        } else {
+          stopCarousel();
+        }
+      });
+    }
+    if (stickyToggle){
+      stickyToggle.addEventListener('change', () => {
+        const headerEl = document.querySelector('header');
+        if (headerEl){
+          headerEl.classList.toggle('sticky', stickyToggle.checked);
+        }
+      });
+    }
   })();
 
   // Keyboard shortcuts for carousel navigation
   window.addEventListener('keydown', (e)=>{
+    if (e.target && (/input|select|textarea/i).test(e.target.tagName)) return;
     if (e.key === 'ArrowRight') { next(); }
     if (e.key === 'ArrowLeft')  { prev(); }
   });
-
 </script>
 </body>
 </html>
