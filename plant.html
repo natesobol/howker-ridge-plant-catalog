@@ -445,15 +445,12 @@ header p{
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   }
-  async function fetchPlants(params = {}){
-    const prod = new URL('/_functions/plants', SITE_ORIGIN);
-    const dev  = new URL('/_functions-dev/plants', SITE_ORIGIN);
-    for (const [k,v] of Object.entries(params)) if (v) { prod.searchParams.set(k,v); dev.searchParams.set(k,v); }
-    const now = Date.now().toString(); prod.searchParams.set('_', now); dev.searchParams.set('_', now);
-    try { return normalize(await fetchJSON(prod)); }
-    catch { return normalize(await fetchJSON(dev)); }
-    function normalize(data){ return Array.isArray(data) ? data : (data.items || []); }
-  }
+async function fetchPlants() {
+  const url = 'https://natesobol.github.io/howker-ridge-plant-catalog/plants.json';
+  const res = await fetch(url, { mode: 'cors' });
+  return res.json();
+}
+
 
   /* ---------- Carousel and Details Rendering ---------- */
   function buildCarousel(images, altBase){
